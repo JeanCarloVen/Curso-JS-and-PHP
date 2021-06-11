@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="es">
+    <head>
+        <title>Blog con Markdown y Showdownjs</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Blog con Markdown y Showdown.js</h1>
+        <main></main>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+        <script>
+            d = document;
+            $main = d.querySelector("main");
+            
+            fetch("assets/javascript.md")
+                    .then(res => res.ok ? res.text():Promise.reject(res))
+                    .then(text => {
+                        console.log(text);
+                        $main.innerHTML = new showdown.Converter().makeHtml(text);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        let message = err.statusText || "Ocurrio un error";
+                        $main.innerHTML = `Error ${err.status}:${message}`;
+                    })
+            
+        </script>
+    </body>
+</html>

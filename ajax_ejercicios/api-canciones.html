@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="es">
+    <head>
+        <title>Buscador de Canciones</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            html{
+                font-family: sans-serif;
+            }
+            
+            img{
+                max-width: 100%;
+                height: auto;
+            }
+            
+            
+            main{
+                display: flex;
+                flex-direction: column-reverse;
+            }
+            
+            loader{
+                display: none;
+                margin: auto;
+            }
+            
+            .song blockquote{
+                white-space: pre-wrap;
+            }
+            
+            @media screen and (min-width: 800px){
+                main{
+                    flex-direction: row;
+                }
+                
+                main >*{
+                    padding: 1rem;
+                    flex-basis: 50%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Buscador de Canciones</h1>
+        <form id="song-search">
+            <input type="text" name="artist" placeholder="Nombre del interprete" required>
+            <br>
+            <input type="text" name="song" placeholder="Nombre de la cancion" required>
+            <br>
+            <input type="submit">
+        </form>        
+        <img class="loader" src="assets/loader.svg" alt="Cargando...">
+        <aside class="error"></aside>
+        <main>
+            <article class="artist"></article>
+            <article class="song"></article>
+        </main>
+        <script>
+            const d = document,
+                    $form = d.getElementById("song-search"),
+                    $loader = d.querySelector(".loader"),
+                    $error = d.querySelector(".error"),
+                    $main = d.querySelector("main"),
+                    $artist = d.querySelector(".artist"),
+                    $song = d.querySelector(".song");
+            
+            $form.addEventListener("submit", async e=>{
+               e.preventDefault();
+               try{
+                   $loader.style.display = "block";
+                   
+                   let artist = e.target.artist.value.toLowerCase(),
+                   song = e.target.song.value.toLowerCase(),
+                   $artistTemplate = "",
+                   $songTemplate = "",
+                   artistAPI = `https://theaudiodb.com/api/v1/json/1/search.php?s=${artist}`,
+                   songAPI = `https://api.lyrics.ovh/v1/${artist}/${song}`,
+                   artistFetch = fetch(artistAPI);
+                   songFetch = fetch(songAPI);
+                   
+                   //Destructuración: Espera la respuesta de ambas APIS
+                   [artistRes, songRes] = await Promise.all([artistFetch, songFetch]),
+                   artistData = await artistRes.json();
+                   songData = await songRes.json();
+                   
+                   console.log(artistData);
+                   //console.log(artistRes, songRes);
+                   //console.log(artistData, songData);
+                   
+                   //Validación de ambas APIS
+                   
+                   if(artistData.artists === null){
+                       $artistTemplate = `<h2>No existe el interprete ${artist} </h2>`
+                   }else{
+                       let artist = artistData.artists[0];
+                       console.log(artist);
+                       $artistTemplate = `
+                        <h2>${artist.strArtist}</h2>
+                        <img src="${artist.strArtistThumb}" alt="${artist.strArtist}">
+                        <p>${artist.inBornYear} - ${artist.intDiedYear || "Presente"}</p>
+                        <p>${artist.strCountry}</p>
+                        <p>${artist.strGenre} - ${artist.strStyle}</p>
+                        <a href="http://${artist.strWebsite}" target="_blank">Sitio Web</a>
+                        <p>${artist.strBiographyEN}</p>
+                        `;
+                   }
+                   
+                   if(songData.error){
+                       $songTemplate = `<h2>No existe la canción ${song}</h2>`
+                   }else{
+                       $songTemplate = `
+                       <blockquote>${songData.lyrics}</blockquote>
+                        `;
+                   }
+                   
+                   $loader.style.display = "none";
+                   $artist.innerHTML = $artistTemplate;
+                   $song.innerHTML = $songTemplate;
+                   
+               }catch(err){
+                   console.log(err);
+                   let message = err.statusText || "Ocurrio un problema";
+                   $error.innerHTML = `<p>Error ${err.status}: ${message}</p>`;
+                   $loader.style.display = "none";
+               }             
+               
+            });
+        </script>
+    </body>
+</html>
